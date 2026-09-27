@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-card">
+  <h1>Регистрация</h1>
+
+  <form method="post">
+    {{ form.hidden_tag() }}
+
+    {% for field in [form.name, form.email, form.password, form.phone, form.city] %}
+      <div class="field">
+        {{ field.label }}
+        {{ field(class="input") }}
+        {% for e in field.errors %}<span class="error">{{ e }}</span>{% endfor %}
+      </div>
+    {% endfor %}
+
+    <label class="checkbox">{{ form.is_business() }} Я представляю бизнес</label>
+    <span class="hint">Если включено, в объявлениях будет показано «Бизнес», иначе — «Частное лицо».</span>
+
+    {{ form.submit(class="btn btn-primary full") }}
+  </form>
+
+  <p class="muted center" style="margin-top:14px">
+    Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a>
+  </p>
+</div>
+{% endblock %}

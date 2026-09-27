@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-card">
+  <h1>Редактировать профиль</h1>
+
+  <form method="post" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="avatar-editor">
+      <div class="avatar-preview-big">
+        <img id="avatar-img"
+             class="avatar avatar-xl"
+             src="{% if current_user.avatar %}{{ url_for('avatar_file', filename=current_user.avatar) }}{% else %}data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 84 84'><rect width='84' height='84' fill='%23059669'/><text x='50%' y='55%' text-anchor='middle' fill='white' font-size='32' font-family='sans-serif' font-weight='bold'>{{ current_user.name[0]|upper }}</text></svg>{% endif %}"
+             alt="" />
+      </div>
+
+      <label for="avatar-input" class="file-btn">Выбрать фото</label>
+      {{ form.avatar(class="file-hidden", id="avatar-input", accept="image/*") }}
+
+      <p class="hint center" id="file-name-hint">
+        {% if current_user.avatar %}Фото загружено{% else %}JPG, PNG или WEBP. До 8 МБ.{% endif %}
+      </p>
+    </div>
+
+    <div class="field">
+      {{ form.name.label }}
+      {{ form.name(class="input") }}
+      {% for e in form.name.errors %}<span class="error">{{ e }}</span>{% endfor %}
+    </div>
+
+    <div class="field">
+      {{ form.phone.label }}
+      {{ form.phone(class="input", placeholder="+7 ...") }}
+    </div>
+
+    <div class="field">
+      {{ form.city.label }}
+      {{ form.city(class="input", placeholder="Москва") }}
+    </div>
+
+    <label class="checkbox">{{ form.is_business() }} Я представляю бизнес</label>
+    <span class="hint">Если включено, будет показано «Бизнес», иначе — «Частное лицо».</span>
+
+    {{ form.submit(class="btn btn-primary full") }}
+  </form>
+
+  <p class="center" style="margin-top:14px">
+    <a href="{{ url_for('profile', user_id=current_user.id) }}" class="muted">Назад в профиль</a>
+  </p>
+</div>
+
+<script>
+  const input = document.getElementById("avatar-input");
+  const img = document.getElementById("avatar-img");
+  const hint = document.getElementById("file-name-hint");
+
+  input.addEventListener("change", () => {
+    const file = input.files[0];
+    if (!file) return;
+    hint.textContent = "Выбрано: " + file.name;
+    const reader = new FileReader();
+    reader.onload = (e) => { img.src = e.target.result; };
+    reader.readAsDataURL(file);
+  });
+</script>
+{% endblock %}

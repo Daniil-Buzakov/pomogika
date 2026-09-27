@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="hero">
+  <h1>Помощь рядом — за час или на день</h1>
+  <p class="hero-sub">
+    Нужно спустить шкаф, разобраться в уроке или найти подработку?
+    Создайте объявление — откликнутся рядом.
+  </p>
+
+  {% if current_user.is_authenticated %}
+    <a href="{{ url_for('new_ad') }}" class="btn btn-primary btn-big">Создать объявление</a>
+  {% else %}
+    <a href="{{ url_for('register') }}" class="btn btn-primary btn-big">Начать — это бесплатно</a>
+  {% endif %}
+</section>
+
+<form class="filters" method="get" action="{{ url_for('index') }}">
+  <input type="text" name="q" placeholder="Что нужно сделать" value="{{ request.args.get('q','') }}" />
+  <input type="text" name="city" placeholder="Город" value="{{ request.args.get('city','') }}" />
+  <select name="type">
+    <option value="">Тип: любой</option>
+    <option value="pomosch" {% if request.args.get('type')=='pomosch' %}selected{% endif %}>Помощь</option>
+    <option value="podrabotka" {% if request.args.get('type')=='podrabotka' %}selected{% endif %}>Подработка</option>
+  </select>
+  <select name="category">
+    <option value="">Категория: любая</option>
+    {% for c in ["Дом и быт","Обучение","Цифровое","Курьер","Ремонт","Творчество","Бизнес-помощь"] %}
+      <option value="{{ c }}" {% if request.args.get('category')==c %}selected{% endif %}>{{ c }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary">Найти</button>
+</form>
+
+<h2 class="section-title">Свежие объявления</h2>
+
+{% if ads %}
+  <div class="grid">
+    {% for ad in ads %}
+      <a class="card" href="{{ url_for('ad_detail', ad_id=ad.id) }}">
+        {% if ad.photos %}
+          <div class="card-photo" style="background-image:url('{{ url_for('uploaded_file', filename=ad.photos[0].filename) }}')"></div>
+        {% else %}
+          <div class="card-photo card-photo-empty">Нет фото</div>
+        {% endif %}
+
+        <div class="card-body">
+          <div class="badges">
+            <span class="badge {% if ad.type=='pomosch' %}badge-green{% else %}badge-blue{% endif %}">
+              {{ 'Помощь' if ad.type=='pomosch' else 'Подработка' }}
+            </span>
+            <span class="badge {% if ad.author.is_business %}badge-purple{% else %}badge-gray{% endif %}">
+              {{ ad.author.kind }}
+            </span>
+            <span class="muted small">{{ ad.category }}</span>
+          </div>
+          <h3>{{ ad.title }}</h3>
+          <p class="muted clamp-2">{{ ad.description }}</p>
+
+          <div class="card-footer">
+            <b class="price">{{ ad.price_label }}</b>
+            <span class="author-line">
+              {% if ad.author.avatar %}
+                <img class="avatar avatar-xs" src="{{ url_for('avatar_file', filename=ad.author.avatar) }}" alt="" />
+              {% else %}
+                <span class="avatar avatar-xs avatar-letter">{{ ad.author.name[0]|upper }}</span>
+              {% endif %}
+              <span class="muted small">{{ ad.city }} · {{ ad.author.name }}</span>
+            </span>
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty">
+    <p>Пока объявлений нет.</p>
+    {% if current_user.is_authenticated %}
+      <a href="{{ url_for('new_ad') }}" class="btn btn-primary">Создать первое</a>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% endblock %}

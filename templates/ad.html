@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="ad">
+  <div class="badges">
+    <span class="badge {% if ad.type=='pomosch' %}badge-green{% else %}badge-blue{% endif %}">
+      {% if ad.type=='pomosch' %}Помощь — около 1 часа{% else %}Подработка — на день{% endif %}
+    </span>
+    <span class="badge {% if ad.author.is_business %}badge-purple{% else %}badge-gray{% endif %}">
+      {{ ad.author.kind }}
+    </span>
+    <span class="muted small">{{ ad.category }}</span>
+    {% if ad.status != 'active' %}<span class="badge badge-gray">Завершено</span>{% endif %}
+  </div>
+
+  <h1>{{ ad.title }}</h1>
+  <p class="pre">{{ ad.description }}</p>
+
+  {% if ad.photos %}
+    <div class="gallery">
+      {% for p in ad.photos %}
+        <a href="{{ url_for('uploaded_file', filename=p.filename) }}" target="_blank">
+          <img src="{{ url_for('uploaded_file', filename=p.filename) }}" alt="Фото" />
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="author-box">
+    <a href="{{ url_for('profile', user_id=ad.author.id) }}" class="author-avatar-link">
+      {% if ad.author.avatar %}
+        <img class="avatar avatar-md" src="{{ url_for('avatar_file', filename=ad.author.avatar) }}" alt="" />
+      {% else %}
+        <span class="avatar avatar-md avatar-letter">{{ ad.author.name[0]|upper }}</span>
+      {% endif %}
+    </a>
+    <div>
+      <a href="{{ url_for('profile', user_id=ad.author.id) }}" class="author-name">{{ ad.author.name }}</a>
+      <div class="muted small">
+        {{ ad.author.kind }}
+        {% if ad.author.city %} · {{ ad.author.city }}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="meta">
+    <span>Оплата: <b class="price">{{ ad.price_label }}</b></span>
+    <span>Место: {{ ad.city }}{% if ad.address %}, {{ ad.address }}{% endif %}</span>
+  </div>
+
+  <div class="actions">
+    {% if current_user.is_authenticated and current_user.id != ad.author_id and ad.status == 'active' %}
+      <form method="post" action="{{ url_for('write_to_ad', ad_id=ad.id) }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button class="btn btn-primary btn-big">Написать автору</button>
+      </form>
+      {% if ad.author.phone %}
+        <a href="tel:{{ ad.author.phone }}" class="btn btn-outline btn-big">Позвонить</a>
+      {% endif %}
+    {% elif not current_user.is_authenticated %}
+      <a href="{{ url_for('login', next=request.path) }}" class="btn btn-primary btn-big">
+        Войдите, чтобы написать
+      </a>
+    {% elif current_user.id == ad.author_id and ad.status == 'active' %}
+      <form method="post" action="{{ url_for('close_ad', ad_id=ad.id) }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button class="btn btn-dark">Отметить как завершённое</button>
+      </form>
+    {% endif %}
+  </div>
+</article>
+
+{% if current_user.is_authenticated and current_user.id != ad.author_id %}
+  <section class="card" style="padding:16px;margin-top:20px">
+    <h2 class="section-title">Отзыв об авторе</h2>
+    <a href="{{ url_for('profile', user_id=ad.author.id) }}#review" class="btn btn-outline">
+      Перейти в профиль автора
+    </a>
+  </section>
+{% endif %}
+{% endblock %}

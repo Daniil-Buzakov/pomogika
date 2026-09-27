@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="chat-header">
+  {% if other.avatar %}
+    <img class="avatar avatar-md" src="{{ url_for('avatar_file', filename=other.avatar) }}" alt="" />
+  {% else %}
+    <span class="avatar avatar-md avatar-letter">{{ other.name[0]|upper }}</span>
+  {% endif %}
+  <div>
+    <b>{{ other.name }}</b>
+    <span class="badge {% if other.is_business %}badge-purple{% else %}badge-gray{% endif %} small">
+      {{ other.kind }}
+    </span>
+    <p class="muted small">
+      Объявление: <a href="{{ url_for('ad_detail', ad_id=chat.ad.id) }}">{{ chat.ad.title }}</a>
+    </p>
+  </div>
+</div>
+
+<div id="chat-window" class="chat-window"></div>
+
+<form method="post" class="chat-input" id="chat-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <input type="text" name="text" id="chat-input" placeholder="Введите сообщение..." autocomplete="off" required />
+  <button class="btn btn-primary">Отправить</button>
+</form>
+
+<p class="muted small center">
+  <a href="{{ url_for('chats_list') }}">Все диалоги</a>
+</p>
+
+<script>
+  const CHAT_ID = {{ chat.id }};
+  const win = document.getElementById("chat-window");
+  let lastCount = -1;
+
+  function render(messages) {
+    win.innerHTML = "";
+    if (messages.length === 0) {
+      win.innerHTML = '<p class="muted center">Начните переписку — напишите первое сообщение.</p>';
+      return;
+    }
+    messages.forEach(m => {
+      const div = document.createElement("div");
+      div.className = "msg " + (m.is_mine ? "msg-mine" : "msg-theirs");
+      const t = document.createElement("div");
+      t.className = "msg-text";
+      t.textContent = m.text;
+      const time = document.createElement("div");
+      time.className = "msg-time";
+      time.textContent = m.time;
+      div.appendChild(t);
+      div.appendChild(time);
+      win.appendChild(div);
+    });
+  }
+
+  async function load() {
+    try {
+      const r = await fetch(`/api/chat/${CHAT_ID}/messages`);
+      if (!r.ok) return;
+      const d = await r.json();
+      if (d.messages.length !== lastCount) {
+        render(d.messages);
+        lastCount = d.messages.length;
+        win.scrollTop = win.scrollHeight;
+      }
+    } catch (e) {}
+  }
+
+  load();
+  setInterval(load, 3000);
+
+  document.getElementById("chat-form").addEventListener("submit", () => {
+    setTimeout(() => {
+      lastCount = -1;
+      load();
+    }, 300);
+  });
+</script>
+{% endblock %}

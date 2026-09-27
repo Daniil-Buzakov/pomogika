@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Мои объявления</h1>
+
+{% if ads %}
+  <div class="my-ads-list">
+    {% for ad in ads %}
+      <div class="my-ad-row">
+        <div class="my-ad-photo">
+          {% if ad.photos %}
+            <img src="{{ url_for('uploaded_file', filename=ad.photos[0].filename) }}" alt="" />
+          {% else %}
+            <div class="my-ad-photo-empty">Нет фото</div>
+          {% endif %}
+        </div>
+
+        <div class="my-ad-info">
+          <div class="badges">
+            <span class="badge {% if ad.type=='pomosch' %}badge-green{% else %}badge-blue{% endif %}">
+              {{ 'Помощь' if ad.type=='pomosch' else 'Подработка' }}
+            </span>
+            {% if ad.status != 'active' %}<span class="badge badge-gray">Завершено</span>{% endif %}
+            <span class="muted small">{{ ad.category }}</span>
+          </div>
+          <a class="my-ad-title" href="{{ url_for('ad_detail', ad_id=ad.id) }}">{{ ad.title }}</a>
+          <div class="muted small">
+            {{ ad.city }} · {{ ad.created_at.strftime('%d.%m.%Y') }}
+          </div>
+        </div>
+
+        <div class="my-ad-price">
+          <b class="price">{{ ad.price_label }}</b>
+        </div>
+
+        <div class="my-ad-actions">
+          <a href="{{ url_for('ad_detail', ad_id=ad.id) }}" class="btn btn-outline">Открыть</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty">
+    <p>У вас пока нет объявлений.</p>
+    <a href="{{ url_for('new_ad') }}" class="btn btn-primary">Создать первое</a>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Помогика — помощь рядом{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="{{ url_for('index') }}" class="logo">Помогика</a>
+
+      <nav class="nav">
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('my_ads') }}">Мои объявления</a>
+
+          <a href="{{ url_for('chats_list') }}" class="nav-chats">
+            <span>Сообщения</span>
+            <span id="unread-badge" class="unread-badge"{% if not unread_count %} style="display:none"{% endif %}>{{ unread_count }}</span>
+          </a>
+
+          <a href="{{ url_for('profile', user_id=current_user.id) }}" class="nav-user">
+            {% if current_user.avatar %}
+              <img class="avatar avatar-sm" src="{{ url_for('avatar_file', filename=current_user.avatar) }}" alt="" />
+            {% else %}
+              <span class="avatar avatar-sm avatar-letter">{{ current_user.name[0]|upper }}</span>
+            {% endif %}
+            {{ current_user.name }}
+          </a>
+
+          <a href="{{ url_for('new_ad') }}" class="btn btn-primary">Создать объявление</a>
+          <a href="{{ url_for('logout') }}" class="muted small">Выйти</a>
+        {% else %}
+          <a href="{{ url_for('index') }}">Объявления</a>
+          <a href="{{ url_for('login') }}">Войти</a>
+          <a href="{{ url_for('register') }}" class="btn btn-primary">Регистрация</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, msg in messages %}
+        <div class="flash flash-{{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      Помогика · Помощь рядом · <a href="{{ url_for('index') }}">Все объявления</a>
+    </div>
+  </footer>
+
+  {% if current_user.is_authenticated %}
+  <script>
+    async function refreshUnread() {
+      try {
+        const r = await fetch("/api/unread");
+        if (!r.ok) return;
+        const d = await r.json();
+        const b = document.getElementById("unread-badge");
+        if (!b) return;
+        if (d.unread > 0) {
+          b.textContent = d.unread;
+          b.style.display = "inline-flex";
+        } else {
+          b.style.display = "none";
+        }
+      } catch (e) {}
+    }
+    refreshUnread();
+    setInterval(refreshUnread, 5000);
+  </script>
+  {% endif %}
+</body>
+</html>

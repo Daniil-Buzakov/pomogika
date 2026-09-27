@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Сообщения</h1>
+
+{% if chats %}
+  <ul class="chat-list">
+    {% for c in chats %}
+      {% set other = c.other_user(current_user.id) %}
+      {% set last = c.messages[-1] if c.messages else None %}
+      {% set unread = c.unread_for(current_user.id) %}
+      <li>
+        <a href="{{ url_for('chat_view', chat_id=c.id) }}" class="chat-item">
+          {% if other.avatar %}
+            <img class="avatar avatar-md" src="{{ url_for('avatar_file', filename=other.avatar) }}" alt="" />
+          {% else %}
+            <span class="avatar avatar-md avatar-letter">{{ other.name[0]|upper }}</span>
+          {% endif %}
+          <div class="chat-info">
+            <div class="chat-row">
+              <b>{{ other.name }}</b>
+              <span class="muted small">{{ c.ad.title }}</span>
+            </div>
+            <p class="muted small clamp-1">
+              {% if last %}
+                {{ 'Вы: ' if last.sender_id == current_user.id else '' }}{{ last.text }}
+              {% else %}
+                Нет сообщений
+              {% endif %}
+            </p>
+          </div>
+          <span class="chat-count-wrap">
+            {% if unread > 0 %}
+              <span class="unread-badge">{{ unread }}</span>
+            {% endif %}
+          </span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="empty">
+    <p>Пока нет диалогов.</p>
+    <p class="muted small">Найдите объявление и нажмите «Написать автору».</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">К объявлениям</a>
+  </div>
+{% endif %}
+{% endblock %}

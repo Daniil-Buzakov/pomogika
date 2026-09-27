@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-card">
+  <h1>Вход</h1>
+
+  <form method="post">
+    {{ form.hidden_tag() }}
+
+    <div class="field">
+      {{ form.email.label }}
+      {{ form.email(class="input") }}
+    </div>
+
+    <div class="field">
+      {{ form.password.label }}
+      {{ form.password(class="input") }}
+    </div>
+
+    {{ form.submit(class="btn btn-primary full") }}
+  </form>
+
+  <p class="muted center" style="margin-top:14px">
+    Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a>
+  </p>
+</div>
+{% endblock %}

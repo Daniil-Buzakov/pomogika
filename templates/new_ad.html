@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-card wide">
+  <h1>Новое объявление</h1>
+  <p class="muted small">Заполните поля — это займёт минуту.</p>
+
+  <form method="post" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="field">
+      {{ form.type.label }}
+      {{ form.type(class="input", id="ad-type") }}
+      <span class="hint">
+        Помощь — короткая задача. Подработка — на целый день, оплата указывается за час.
+      </span>
+    </div>
+
+    <div class="field">
+      {{ form.title.label }}
+      {{ form.title(class="input", placeholder="Например: Помочь спустить шкаф") }}
+      {% for e in form.title.errors %}<span class="error">{{ e }}</span>{% endfor %}
+    </div>
+
+    <div class="field">
+      {{ form.description.label }}
+      {{ form.description(class="input", rows=5, placeholder="Подробности: где, когда, что именно нужно") }}
+      {% for e in form.description.errors %}<span class="error">{{ e }}</span>{% endfor %}
+    </div>
+
+    <div class="field">
+      {{ form.category.label }}
+      {{ form.category(class="input") }}
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label id="price-label" for="price">Цена, ₽</label>
+        {{ form.price(class="input", id="price") }}
+        <span class="hint" id="price-hint">Укажите общую стоимость задачи.</span>
+      </div>
+      <div class="field">
+        {{ form.city.label }}
+        {{ form.city(class="input", placeholder="Москва") }}
+      </div>
+    </div>
+
+    <div class="field">
+      {{ form.address.label }}
+      {{ form.address(class="input", placeholder="Улица и дом") }}
+    </div>
+
+    <div class="field">
+      {{ form.photos.label }}
+      <label for="photos-input" class="file-btn">Выбрать фото</label>
+      {{ form.photos(class="file-hidden", id="photos-input", multiple=True, accept="image/*") }}
+      <span class="hint" id="photos-hint">Можно выбрать несколько фото. JPG, PNG, WEBP.</span>
+      <div id="photos-preview" class="photos-preview"></div>
+    </div>
+
+    {{ form.submit(class="btn btn-primary full") }}
+  </form>
+</div>
+
+<script>
+  const typeSelect = document.getElementById("ad-type");
+  const priceLabel = document.getElementById("price-label");
+  const priceHint = document.getElementById("price-hint");
+
+  function updatePriceLabel() {
+    if (typeSelect.value === "podrabotka") {
+      priceLabel.textContent = "Цена за час, ₽";
+      priceHint.textContent = "Оплата за каждый час работы.";
+    } else {
+      priceLabel.textContent = "Цена, ₽";
+      priceHint.textContent = "Общая стоимость задачи.";
+    }
+  }
+  typeSelect.addEventListener("change", updatePriceLabel);
+  updatePriceLabel();
+
+  const photosInput = document.getElementById("photos-input");
+  const photosPreview = document.getElementById("photos-preview");
+  const photosHint = document.getElementById("photos-hint");
+
+  photosInput.addEventListener("change", () => {
+    photosPreview.innerHTML = "";
+    const files = photosInput.files;
+    if (!files.length) return;
+    photosHint.textContent = "Выбрано файлов: " + files.length;
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = document.createElement("img");
+        img.src = e.target.result;
+        photosPreview.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+</script>
+{% endblock %}

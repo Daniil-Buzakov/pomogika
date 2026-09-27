@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="profile-card">
+  <div class="profile-head">
+    {% if user.avatar %}
+      <img class="avatar avatar-xl" src="{{ url_for('avatar_file', filename=user.avatar) }}" alt="" />
+    {% else %}
+      <span class="avatar avatar-xl avatar-letter">{{ user.name[0]|upper }}</span>
+    {% endif %}
+    <div>
+      <h1>{{ user.name }}</h1>
+      <div class="badges" style="margin-top:6px">
+        <span class="badge {% if user.is_business %}badge-purple{% else %}badge-gray{% endif %}">
+          {{ user.kind }}
+        </span>
+        {% if avg %}<span class="badge badge-yellow">Рейтинг {{ avg }} · {{ reviews|length }} отзывов</span>{% endif %}
+        {% if user.phone %}<span class="badge badge-gray">Телефон: {{ user.phone }}</span>{% endif %}
+      </div>
+      <p class="muted small" style="margin-top:6px">
+        {{ user.city or 'Город не указан' }} · на Помогике с {{ user.created_at.strftime('%d.%m.%Y') }}
+      </p>
+
+      {% if current_user.is_authenticated and current_user.id == user.id %}
+        <a href="{{ url_for('profile_edit') }}" class="btn btn-outline" style="margin-top:10px">
+          Редактировать профиль
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2 class="section-title">Объявления ({{ ads|length }})</h2>
+  {% if ads %}
+    <ul class="list">
+      {% for a in ads %}
+        <li>
+          <a href="{{ url_for('ad_detail', ad_id=a.id) }}">{{ a.title }}</a>
+          <span class="muted small">— {{ a.category }}</span>
+          <b class="price" style="float:right">{{ a.price_label }}</b>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}<p class="muted">Пусто</p>{% endif %}
+</section>
+
+<section id="review">
+  <h2 class="section-title">Отзывы ({{ reviews|length }})</h2>
+  {% if reviews %}
+    <ul class="reviews">
+      {% for r in reviews %}
+        <li>
+          <div class="review-head">
+            {% if r.author.avatar %}
+              <img class="avatar avatar-xs" src="{{ url_for('avatar_file', filename=r.author.avatar) }}" alt="" />
+            {% else %}
+              <span class="avatar avatar-xs avatar-letter">{{ r.author.name[0]|upper }}</span>
+            {% endif %}
+            <b>{{ r.author.name }}</b>
+            <span class="stars">Оценка: {{ r.rating }}</span>
+          </div>
+          <p>{{ r.text }}</p>
+          <span class="muted small">{{ r.created_at.strftime('%d.%m.%Y') }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}<p class="muted">Пока нет отзывов.</p>{% endif %}
+
+  {% if current_user.is_authenticated and current_user.id != user.id %}
+    <form method="post" class="response-form">
+      {{ form.hidden_tag() }}
+      <h3>Оставить отзыв</h3>
+      {{ form.rating(class="input") }}
+      {{ form.text(class="input", rows=3, placeholder="Расскажите о сотрудничестве") }}
+      {{ form.submit(class="btn btn-primary") }}
+    </form>
+  {% endif %}
+</section>
+{% endblock %}
