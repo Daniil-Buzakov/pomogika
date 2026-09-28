@@ -10,8 +10,8 @@
       {% set unread = c.unread_for(current_user.id) %}
       <li>
         <a href="{{ url_for('chat_view', chat_id=c.id) }}" class="chat-item">
-          {% if other.avatar %}
-            <img class="avatar avatar-md" src="{{ url_for('avatar_file', filename=other.avatar) }}" alt="" />
+          {% if other.avatar_url %}
+            <img class="avatar avatar-md" src="{{ other.avatar_url }}" alt="" />
           {% else %}
             <span class="avatar avatar-md avatar-letter">{{ other.name[0]|upper }}</span>
           {% endif %}
