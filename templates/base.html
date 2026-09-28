@@ -21,8 +21,8 @@
           </a>
 
           <a href="{{ url_for('profile', user_id=current_user.id) }}" class="nav-user">
-            {% if current_user.avatar %}
-              <img class="avatar avatar-sm" src="{{ url_for('avatar_file', filename=current_user.avatar) }}" alt="" />
+            {% if current_user.avatar_url %}
+              <img class="avatar avatar-sm" src="{{ current_user.avatar_url }}" alt="" />
             {% else %}
               <span class="avatar avatar-sm avatar-letter">{{ current_user.name[0]|upper }}</span>
             {% endif %}
