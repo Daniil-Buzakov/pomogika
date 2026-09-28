@@ -2,23 +2,19 @@ import os
 import uuid
 from datetime import datetime, timedelta
 from flask import (Flask, render_template, redirect, url_for, flash, request,
-                   abort, send_from_directory, jsonify)
+                   abort, jsonify)
 from flask_login import (LoginManager, login_user, logout_user,
                          login_required, current_user)
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
+import cloudinary
+import cloudinary.uploader
 from models import db, User, Ad, AdPhoto, Chat, Message, Review
 from forms import RegisterForm, LoginForm, AdForm, ReviewForm, ProfileForm
 
 # ---------- Конфигурация ----------
 load_dotenv()
-
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-UPLOAD_DIR = os.path.join(BASE_DIR, "static", "uploads")
-AVATAR_DIR = os.path.join(BASE_DIR, "static", "avatars")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(AVATAR_DIR, exist_ok=True)
 
 ALLOWED_EXT = {"jpg", "jpeg", "png", "webp"}
 
@@ -26,19 +22,23 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "dev-only-fallback")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///pomogika.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["UPLOAD_FOLDER"] = UPLOAD_DIR
-app.config["AVATAR_FOLDER"] = AVATAR_DIR
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
 
-# Cookie безопасности
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
 )
-# Secure=True включается в продакшене (за HTTPS)
 if os.environ.get("FLASK_ENV") == "production":
     app.config["SESSION_COOKIE_SECURE"] = True
+
+# ---------- Cloudinary ----------
+cloudinary.config(
+    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.environ.get("CLOUDINARY_API_KEY"),
+    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
+    secure=True,
+)
 
 db.init_app(app)
 csrf = CSRFProtect(app)
@@ -66,17 +66,26 @@ def inject_unread():
 
 
 # ---------- Утилиты ----------
-def save_image(file, folder):
+def upload_to_cloudinary(file, folder="pomogika"):
+    """Загружает файл в Cloudinary и возвращает URL или None."""
+    if not file or not file.filename:
+        return None
     ext = file.filename.rsplit(".", 1)[-1].lower()
     if ext not in ALLOWED_EXT:
         return None
-    fname = f"{uuid.uuid4().hex}.{ext}"
-    file.save(os.path.join(folder, fname))
-    return fname
+    try:
+        result = cloudinary.uploader.upload(
+            file,
+            folder=folder,
+            resource_type="image",
+        )
+        return result.get("secure_url")
+    except Exception as e:
+        print(f"Cloudinary upload error: {e}")
+        return None
 
 
 def cleanup_old_messages():
-    """Удаляет сообщения старше 30 дней."""
     cutoff = datetime.utcnow() - timedelta(days=30)
     deleted = Message.query.filter(Message.created_at < cutoff).delete()
     if deleted:
@@ -185,10 +194,9 @@ def new_ad():
         db.session.flush()
 
         for f in request.files.getlist("photos"):
-            if f and f.filename:
-                fname = save_image(f, app.config["UPLOAD_FOLDER"])
-                if fname:
-                    db.session.add(AdPhoto(filename=fname, ad_id=ad.id))
+            url = upload_to_cloudinary(f, folder="pomogika/ads")
+            if url:
+                db.session.add(AdPhoto(url=url, ad_id=ad.id))
 
         db.session.commit()
         flash("Объявление опубликовано", "success")
@@ -357,33 +365,15 @@ def profile_edit():
         current_user.is_business = form.is_business.data
 
         if form.avatar.data and form.avatar.data.filename:
-            fname = save_image(form.avatar.data, app.config["AVATAR_FOLDER"])
-            if fname:
-                if current_user.avatar:
-                    old = os.path.join(app.config["AVATAR_FOLDER"], current_user.avatar)
-                    if os.path.exists(old):
-                        try:
-                            os.remove(old)
-                        except OSError:
-                            pass
-                current_user.avatar = fname
+            url = upload_to_cloudinary(form.avatar.data, folder="pomogika/avatars")
+            if url:
+                current_user.avatar_url = url
 
         db.session.commit()
         flash("Профиль обновлён", "success")
         return redirect(url_for("profile", user_id=current_user.id))
 
     return render_template("profile_edit.html", form=form)
-
-
-# ---------- Файлы ----------
-@app.route("/uploads/<path:filename>")
-def uploaded_file(filename):
-    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
-
-
-@app.route("/avatars/<path:filename>")
-def avatar_file(filename):
-    return send_from_directory(app.config["AVATAR_FOLDER"], filename)
 
 
 with app.app_context():
