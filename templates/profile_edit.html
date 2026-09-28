@@ -10,7 +10,7 @@
       <div class="avatar-preview-big">
         <img id="avatar-img"
              class="avatar avatar-xl"
-             src="{% if current_user.avatar %}{{ url_for('avatar_file', filename=current_user.avatar) }}{% else %}data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 84 84'><rect width='84' height='84' fill='%23059669'/><text x='50%' y='55%' text-anchor='middle' fill='white' font-size='32' font-family='sans-serif' font-weight='bold'>{{ current_user.name[0]|upper }}</text></svg>{% endif %}"
+             src="{% if current_user.avatar_url %}{{ current_user.avatar_url }}{% else %}data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 84 84'><rect width='84' height='84' fill='%23059669'/><text x='50%' y='55%' text-anchor='middle' fill='white' font-size='32' font-family='sans-serif' font-weight='bold'>{{ current_user.name[0]|upper }}</text></svg>{% endif %}"
              alt="" />
       </div>
 
@@ -18,7 +18,7 @@
       {{ form.avatar(class="file-hidden", id="avatar-input", accept="image/*") }}
 
       <p class="hint center" id="file-name-hint">
-        {% if current_user.avatar %}Фото загружено{% else %}JPG, PNG или WEBP. До 8 МБ.{% endif %}
+        {% if current_user.avatar_url %}Фото загружено{% else %}JPG, PNG или WEBP. До 8 МБ.{% endif %}
       </p>
     </div>
 
