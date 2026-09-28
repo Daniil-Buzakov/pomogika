@@ -13,7 +13,7 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(200), nullable=False)
     phone = db.Column(db.String(30))
     city = db.Column(db.String(100))
-    avatar = db.Column(db.String(200))
+    avatar_url = db.Column(db.String(500))
     is_business = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -50,7 +50,7 @@ class Ad(db.Model):
 class AdPhoto(db.Model):
     __tablename__ = "ad_photos"
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(200), nullable=False)
+    url = db.Column(db.String(500), nullable=False)
     ad_id = db.Column(db.Integer, db.ForeignKey("ads.id"), nullable=False)
 
 
