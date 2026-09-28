@@ -8,7 +8,7 @@
       <div class="my-ad-row">
         <div class="my-ad-photo">
           {% if ad.photos %}
-            <img src="{{ url_for('uploaded_file', filename=ad.photos[0].filename) }}" alt="" />
+            <img src="{{ ad.photos[0].url }}" alt="" />
           {% else %}
             <div class="my-ad-photo-empty">Нет фото</div>
           {% endif %}
